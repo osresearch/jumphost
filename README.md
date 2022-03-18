@@ -17,6 +17,15 @@ Goals:
 * https://smallstep.com/blog/use-ssh-certificates/
 * https://www.vaultproject.io/docs/secrets/ssh/signed-ssh-certificates
 
-The jumphost has a public key of the CA that will sign acceptable user keys.
-The jumphost's host key is also signed by the same CA, so that users connecting
-can ensure that they trust it.
+Every user logs into the jump host as user `jump`. Passwords are not
+allowed. Interactive sessions are not allowed.  Only proxy commands
+via the `ssh -J jump@jumphost user@other-host` are allowed.
+
+The jumphost has a public key of the user CA that will sign acceptable
+user keys.  This CA is fixed at image build time; to change the CA requires
+rebuilding the jump host system image.  The login attempts are sent
+via syslog to the network logging host.
+
+The jumphost's host key is also signed by a host CA, so that users
+connecting can ensure that they trust it without having to TOFU
+(Trust On First Use) the key.
