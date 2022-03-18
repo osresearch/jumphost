@@ -26,6 +26,14 @@ user keys.  This CA is fixed at image build time; to change the CA requires
 rebuilding the jump host system image.  The login attempts are sent
 via syslog to the network logging host.
 
+## Signed host keys
+
 The jumphost's host key is also signed by a host CA, so that users
 connecting can ensure that they trust it without having to TOFU
 (Trust On First Use) the key.
+
+You can add it to your user ssh config by running:
+
+```
+echo "@cert-authority * $(cat etc/host_ca.pub)" >> ~/.ssh/known_hosts
+```
