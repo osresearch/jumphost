@@ -1,0 +1,68 @@
+# setup a few directories
+mkdir bin
+mkdir lib
+mkdir lib64
+mkdir etc
+symlink ../lib64 lib/x86_64-linux-gnu
+
+./init .
+
+# Actual ssh tool!
+/usr/sbin/sshd
+/usr/bin/ssh
+
+./passwd /etc
+./shadow /etc
+
+# config and host key
+./sshd_config /etc/ssh
+../build/etc/ssh/ssh_host_dsa_key		/etc/ssh
+../build/etc/ssh/ssh_host_dsa_key.pub		/etc/ssh
+../build/etc/ssh/ssh_host_ecdsa_key		/etc/ssh
+../build/etc/ssh/ssh_host_ecdsa_key.pub		/etc/ssh
+../build/etc/ssh/ssh_host_ed25519_key		/etc/ssh
+../build/etc/ssh/ssh_host_ed25519_key.pub	/etc/ssh
+../build/etc/ssh/ssh_host_rsa_key		/etc/ssh
+../build/etc/ssh/ssh_host_rsa_key.pub		/etc/ssh
+
+# force libnns to be included
+/usr/lib/x86_64-linux-gnu/libnss_compat.so.2 /lib/x86_64-linux-gnu/
+
+# core utils (should be removed)
+/bin/bash
+symlink bash bin/sh
+/usr/bin/mount
+/usr/bin/umount
+/usr/bin/cp
+/usr/bin/mv
+/usr/bin/cmp
+/usr/bin/ls
+/usr/bin/cat
+/usr/bin/echo
+/usr/bin/head
+/usr/bin/tail
+/usr/bin/mkdir
+/usr/bin/setsid
+/usr/bin/dd
+/usr/bin/dirname
+/usr/bin/strace
+/usr/bin/grep
+/usr/bin/xxd
+/usr/bin/mktemp
+/usr/bin/date
+/usr/bin/printf
+/usr/bin/rm
+/usr/bin/sleep
+/usr/bin/tar
+/usr/bin/cpio
+/usr/bin/gzip
+
+# networking stuff
+#/usr/bin/openssl
+#/usr/bin/curl
+#/usr/bin/ping
+#/usr/bin/nc
+/usr/sbin/ifconfig
+/usr/sbin/route
+#/usr/bin/efibootmgr
+
