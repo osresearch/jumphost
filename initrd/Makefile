@@ -9,11 +9,6 @@ all: $O/initrd.cpio.xz
 $O:
 	mkdir -p "$O"
 
-$O/etc/ssh/ssh_host_rsa_key:
-	#rm -rf "$(dir $@)"
-	mkdir -p "$(dir $@)"
-	ssh-keygen -A -f "$O"
-
 $(WORKDIR)/gitstatus: files.txt
 	rm -rf "$(dir $@)"
 	mkdir -p "$(dir $@)"

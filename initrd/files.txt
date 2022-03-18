@@ -16,23 +16,23 @@ symlink ../lib64 lib/x86_64-linux-gnu
 
 # config and host key
 ./sshd_config /etc/ssh
-../build/etc/ssh/ssh_host_dsa_key		/etc/ssh
-../build/etc/ssh/ssh_host_dsa_key.pub		/etc/ssh
-../build/etc/ssh/ssh_host_ecdsa_key		/etc/ssh
-../build/etc/ssh/ssh_host_ecdsa_key.pub		/etc/ssh
-../build/etc/ssh/ssh_host_ed25519_key		/etc/ssh
-../build/etc/ssh/ssh_host_ed25519_key.pub	/etc/ssh
 ../build/etc/ssh/ssh_host_rsa_key		/etc/ssh
 ../build/etc/ssh/ssh_host_rsa_key.pub		/etc/ssh
+../build/etc/ssh/ssh_host_rsa_key-cert.pub	/etc/ssh
+../etc/user_ca.pub				/etc/ssh
 
 # force libnns to be included
 /usr/lib/x86_64-linux-gnu/libnss_compat.so.2 /lib/x86_64-linux-gnu/
 
-# core utils (should be removed)
+# fake shell for the jump user
+/sbin/nologin
+
+# core utils (should be removed once init is replaced)
 /bin/bash
 symlink bash bin/sh
 /usr/bin/mount
 /usr/bin/umount
+/usr/bin/chown
 /usr/bin/cp
 /usr/bin/mv
 /usr/bin/cmp

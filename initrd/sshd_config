@@ -10,14 +10,17 @@
 # possible, but leave them commented.  Uncommented options override the
 # default value.
 
-Include /etc/ssh/sshd_config.d/*.conf
+#Include /etc/ssh/sshd_config.d/*.conf
 
 #Port 22
 #AddressFamily any
 #ListenAddress 0.0.0.0
 #ListenAddress ::
 
-#HostKey /etc/ssh/ssh_host_rsa_key
+HostKey /etc/ssh/ssh_host_rsa_key
+HostCertificate /etc/ssh/ssh_host_rsa_key-cert.pub
+TrustedUserCAKeys /etc/ssh/user_ca.pub
+
 #HostKey /etc/ssh/ssh_host_ecdsa_key
 #HostKey /etc/ssh/ssh_host_ed25519_key
 
@@ -25,8 +28,16 @@ Include /etc/ssh/sshd_config.d/*.conf
 #RekeyLimit default none
 
 # Logging
-#SyslogFacility AUTH
-#LogLevel INFO
+SyslogFacility AUTH
+LogLevel INFO
+
+# Do not let SSH clients do anything except be forwarded to the destination:
+PermitTTY no
+X11Forwarding no
+PermitTunnel no
+GatewayPorts no
+ForceCommand /bin/nologin
+
 
 # Authentication:
 
@@ -35,6 +46,7 @@ Include /etc/ssh/sshd_config.d/*.conf
 #StrictModes yes
 #MaxAuthTries 6
 #MaxSessions 10
+
 
 #PubkeyAuthentication yes
 
@@ -88,7 +100,7 @@ UsePAM no
 #AllowAgentForwarding yes
 #AllowTcpForwarding yes
 #GatewayPorts no
-X11Forwarding yes
+X11Forwarding no
 #X11DisplayOffset 10
 #X11UseLocalhost yes
 #PermitTTY yes
