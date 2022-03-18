@@ -26,7 +26,6 @@ $O/initrd.cpio: $(WORKDIR)/gitstatus
 			-H newc \
 	) \
 	| ./cpio-clean \
-		../kernel/dev.cpio \
 		- \
 	> $@
 	sha256sum $@
