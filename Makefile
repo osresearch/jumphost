@@ -1,4 +1,7 @@
-all: keys build/vmlinuz build/initrd.cpio.xz
+all: keys build/vmlinuz-jump build/initrd.cpio.xz
+
+build/vmlinuz-jump: config/jump.config
+	MAKE=$(MAKE) ./linux-build 5.4.117 $<
 
 keys: etc/user_ca
 keys: etc/host_ca
@@ -58,7 +61,7 @@ qemu: all
 		-M q35 \
 		-m 512 \
 		-serial stdio \
-		-kernel ./build/vmlinuz \
+		-kernel ./build/vmlinuz-jump \
 		-initrd ./build/initrd.cpio.xz \
 		-append "console=ttyS0 ip=dhcp" \
 		-netdev user,id=eth0,hostfwd=tcp::5555-:22 \
