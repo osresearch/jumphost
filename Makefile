@@ -34,7 +34,7 @@ build/etc/ssh/ssh_host_rsa_key-cert.pub: build/etc/ssh/ssh_host_rsa_key etc/host
 		-s etc/host_ca \
 		-h \
 		-I jump \
-		-n jump \
+		-n jump,safeboot \
 		-V +52w \
 		$<.pub
 
