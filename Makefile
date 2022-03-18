@@ -3,19 +3,22 @@ all: keys build/vmlinuz-jump build/initrd.cpio.xz
 build/vmlinuz-jump: config/jump.config
 	MAKE=$(MAKE) ./linux-build 5.4.117 $<
 
+etc:
+	mkdir -p $@
+
 keys: etc/user_ca
 keys: etc/host_ca
 keys: build/etc/ssh/ssh_host_rsa_key-cert.pub
 keys: etc/testuser_rsa-cert.pub
 
 # Create separate CA keys for the user and host system
-etc/user_ca:
+etc/user_ca: | etc
 	ssh-keygen \
 		-t rsa \
 		-b 4096 \
 		-f "$@" \
 		-C "jump-user-CA"
-etc/host_ca:
+etc/host_ca: | etc
 	ssh-keygen \
 		-t rsa \
 		-b 4096 \
@@ -42,12 +45,12 @@ build/etc/ssh/ssh_host_rsa_key-cert.pub: build/etc/ssh/ssh_host_rsa_key etc/host
 		$<.pub
 
 # Create a test user that is signed with the key
-etc/testuser_rsa:
+etc/testuser_rsa: | etc
 	ssh-keygen \
 		-t rsa \
 		-b 4096 \
 		-f $@
-etc/testuser_rsa-cert.pub: etc/testuser_rsa
+etc/testuser_rsa-cert.pub: etc/testuser_rsa | etc
 	ssh-keygen \
 		-s etc/user_ca \
 		-I test-user \
