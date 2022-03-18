@@ -22,38 +22,53 @@ if [ -z "$MAKE" ]; then
 	MAKE="make -j$(nproc)"
 fi
 
-mkdir -p "$O/$TAG" || die "$O/$TAG: unable to create output directory"
-
 LINUX="linux-${LINUX_VERSION}"
 LINUX_TAR="$LINUX.tar.xz"
 LINUX_SIG="$LINUX.tar.sign"
 LINUX_URL="https://cdn.kernel.org/pub/linux/kernel/v5.x/$LINUX_TAR"
 
+mkdir -p "$O/$LINUX-$TAG" \
+|| die "$O/$LINUX-$TAG: unable to create output directory"
+
 if [ ! -r "$O/$LINUX_TAR" ]; then
 	info "Fetching $LINUX_URL"
 	wget -O "$O/$LINUX_TAR.tmp" "$LINUX_URL"
 	wget -nc -O "$O/$LINUX_SIG" "$(dirname $LINUX_URL)/$LINUX_SIG"
+	# todo: fetch the official signing keys and validate the file
 	#unxz -cd < "$O/$LINUX_TAR.tmp" | gpg2 --verify "$O/$LINUX_SIG" - || die "sig failed"
 	mv "$O/$LINUX_TAR.tmp" "$O/$LINUX_TAR"
 fi
 
 if [ ! -r "$O/$LINUX/.extract" ]; then
 	info "Unpacking $LINUX_TAR"
-	tar -xf "$O/$LINUX_TAR" -C "$O" || die "$O/$LINUX_TAR: untar failed"
+
+	tar -xf "$O/$LINUX_TAR" -C "$O" \
+	|| die "$O/$LINUX_TAR: untar failed"
+
 	touch "$O/$LINUX/.extract"
 fi
 
 CONFIG_HASH="$(sha256sum "$CONFIG_FILE" | cut -d\  -f1)"
-OLDCONFIG_FILE="$O/$TAG/.config"
+OLDCONFIG_FILE="$O/$LINUX-$TAG/.config"
 
 if [ "$CONFIG_FILE" -nt "$OLDCONFIG_FILE" ]; then
 	info "Updating $OLDCONFIG_FILE"
-	cp "$CONFIG_FILE" "$OLDCONFIG_FILE" || die "$OLDCONFIG_FILE: unable to copy"
+	cp "$CONFIG_FILE" "$OLDCONFIG_FILE" \
+	|| die "$OLDCONFIG_FILE: unable to copy"
+
 	$MAKE \
 		-C "$O/$LINUX" \
-		O="../$TAG" \
+		O="../$LINUX-$TAG" \
 		olddefconfig \
 	|| die "$OLDCONFIG_FILE: olddefconfig failed"
+fi
+
+if [ ! -r "$O/dev.cpio" ]; then
+	info "$O/dev.cpio: creating /dev file"
+	base64 -d <<EOF | gzip -d > "$O/dev.cpio" || die "dev.cpio: failed to create"
+H4sIAPo+NGIAAzMwNzA3MDS1NDBPTkw0NgACI0MLAwqBKZQ2hNLOMImU1DL95Py84vycVAYGBgOw
+3USaSaw6dOAEY4QEOXr6uAYpKioyjAI4AAAyAyY7AAIAAA==
+EOF
 fi
 
 #$(LINUX)/.patched: $(LINUX_PATCH) $(LINUX)/.extract
@@ -69,11 +84,13 @@ $MAKE \
 	KBUILD_BUILD_TIMESTAMP="$CONFIG_HASH" \
 	KBUILD_BUILD_VERSION="$TAG" \
 	-C "$O/$LINUX" \
-	O="../$TAG" \
-|| die "$O/$TAG: make failed"
+	O="../$LINUX-$TAG" \
+|| die "$O/$LINUX-$TAG: make failed"
 
-cp "$O/$TAG/arch/x86/boot/bzImage" "$O/vmlinuz-$TAG" \
+cp "$O/$LINUX-$TAG/arch/x86/boot/bzImage" "$O/vmlinuz-$TAG" \
 || die "$O/vmlinuz-$TAG: unable to copy"
+
+sha256sum "$O/vmlinuz-$TAG"
 
 #menuconfig: $(LINUX_DOTCONFIG)
 #	$(MAKE) -j1 -C $(dir $<) menuconfig savedefconfig
