@@ -4,10 +4,13 @@
 O ?= ../build
 WORKDIR := $O/initrd
 
-all: $O/initrd.cpio.xz
+all: $O/init $O/initrd.cpio.xz
 
 $O:
 	mkdir -p "$O"
+
+$O/init: init.c
+	$(CC) -O3 -W -Wall -o $@ $<
 
 $(WORKDIR)/gitstatus: files.txt
 	rm -rf "$(dir $@)"
