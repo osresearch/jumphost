@@ -1,12 +1,16 @@
 # setup a few directories
-mkdir bin
-mkdir lib
-mkdir lib64
-mkdir etc
+mkdir /bin
+mkdir /lib
+mkdir /lib64
+mkdir /etc
+mkdir /dev
 symlink ../lib64 lib/x86_64-linux-gnu
 
+# device files
+mknod /dev/console c 5 0
+
 # binary to initialize the system before execing sshd
-../build/init .
+../build/init /
 
 # Actual ssh tool!
 /usr/sbin/sshd
@@ -24,7 +28,7 @@ symlink ../lib64 lib/x86_64-linux-gnu
 ../etc/user_ca.pub				/etc/ssh
 
 # force libnns to be included
-/usr/lib/x86_64-linux-gnu/libnss_compat.so.2 /lib/x86_64-linux-gnu/
+/usr/lib/x86_64-linux-gnu/libnss_compat.so.2 /lib64
 
 # fake shell for the jump user
 /sbin/nologin

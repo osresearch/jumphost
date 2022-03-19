@@ -12,25 +12,8 @@ $O:
 $O/init: init.c
 	$(CC) -O3 -W -Wall -o $@ $<
 
-$(WORKDIR)/gitstatus: files.txt
-	rm -rf "$(dir $@)"
-	mkdir -p "$(dir $@)"
-	./populate "$(dir $@)" "$<"
-	git status -s > "$@"
-
--include $O/initrd.deps
-
-$O/initrd.cpio: $(WORKDIR)/gitstatus
-	( cd $(dir $<) ; \
-		find . -print0 \
-		| cpio \
-			-0 \
-			-o \
-			-H newc \
-	) \
-	| ./cpio-clean \
-		- \
-	> $@
+$O/initrd.cpio: files.txt
+	./initrd-build $@ $<
 	sha256sum $@
 
 $O/initrd.cpio.xz: $O/initrd.cpio
