@@ -15,21 +15,8 @@ $O/init: init.c
 $O/initrd.cpio: files.txt
 	./initrd-build $@ $<
 	sha256sum $@
-
-$O/initrd.cpio.xz: $O/initrd.cpio
-	xz \
-		--check=crc32 \
-		--lzma2=dict=256KiB \
-		--threads=0 \
-		< "$<" \
-	| dd bs=512 conv=sync status=none \
-	> "$@.tmp"
-	@if ! cmp --quiet "$@.tmp" "$@" ; then \
-		mv "$@.tmp" "$@" ; \
-	else \
-		echo "$@: unchanged" ; \
-		rm "$@.tmp" ; \
-	fi
+$O/initrd.cpio.xz: files.txt
+	./initrd-build $@ $<
 	sha256sum $@
 
 $O/initrd.cpio.bz: $O/initrd.cpio

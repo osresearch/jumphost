@@ -7,6 +7,8 @@ import os
 from enum import IntEnum
 import subprocess
 import traceback
+import tempfile
+from tempfile import NamedTemporaryFile
 
 bindir = "bin"
 libdir = "lib64"
@@ -22,6 +24,11 @@ def system(*args):
 	#print(sub.stderr, file=sys.stderr)
 	#return None
 	return sub
+
+def align(data, b):
+	if len(data) % b != 0:
+		data += bytes(b - len(data) % b)
+	return data
 
 # mode includes
 class CPIO_MODE(IntEnum):
@@ -256,21 +263,43 @@ for filename in sys.argv[2:]:
 				exit(1)
 
 
+image = b''
+for dst in sorted(dst_files):
+	f = dst_files[dst]
+
+	# align before starting the next file
+	image = align(image, 4)
+
+	image += f
+
+# align before starting the trailer file
+image = align(image, 4)
+image += cpio_entry("TRAILER!!!", b'', mode=0)
+
+# pad to a full block size to make linux happy if
+# this is ever concatenated with another initrd
+image = align(image, 512)
+
+if initrd_filename.endswith('.xz'):
+	# write to a temp file first
+	old_len = len(image)
+
+	with NamedTemporaryFile() as tmp:
+		tmp.write(image)
+		sub = system("xz",
+			"--check=crc32",
+			"--lzma2=dict=256KiB",
+			"--threads=0",
+			"--stdout",
+			tmp.name
+		)
+
+	# pad compressed data to a full block size to make linux
+	# happy if this is ever concatenated with another initrd
+	image = align(sub.stdout, 512)
+	print("%s: %d bytes (%d uncompressed)" % (tmp.name, len(image), old_len), file=sys.stderr)
+else:
+	print("%s: %d bytes" % (initrd_filename, len(image)), file=sys.stderr)
+
 with open(initrd_filename, "wb") as initrd:
-	total = 0
-	for dst in sorted(dst_files):
-		f = dst_files[dst]
-		if total % 4 != 0:
-			f = bytes(4 - total % 4) + f
-		initrd.write(f)
-		total += len(f)
-
-	cpio_trailer = cpio_entry("TRAILER!!!", b'', mode=0)
-	initrd.write(cpio_trailer)
-	total += len(cpio_trailer)
-
-	# pad to a full block size to make linux happy if
-	# this is ever concatenated with another initrd
-	if total % 512 != 0:
-		initrd.write(bytes(512 - total % 512))
-
+	initrd.write(image)
