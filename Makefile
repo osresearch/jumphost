@@ -58,6 +58,8 @@ etc/testuser_rsa-cert.pub: etc/testuser_rsa | etc
 		-V +1h \
 		$<.pub
 
+
+INITRD ?= ./build/initrd.cpio.xz
 	
 qemu: all
 	qemu-system-x86_64 \
@@ -65,7 +67,7 @@ qemu: all
 		-m 512 \
 		-serial stdio \
 		-kernel ./build/vmlinuz-jump \
-		-initrd ./build/initrd.cpio.xz \
+		-initrd $(INITRD) \
 		-append "console=ttyS0 ip=dhcp" \
 		-netdev user,id=eth0,hostfwd=tcp::5555-:22 \
 		-device e1000,netdev=eth0 \
