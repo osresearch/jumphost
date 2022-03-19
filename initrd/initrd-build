@@ -8,11 +8,13 @@ from enum import IntEnum
 import subprocess
 import traceback
 import tempfile
+import argparse
 from tempfile import NamedTemporaryFile
 
 bindir = "bin"
 libdir = "lib64"
 verbose = False
+cwd = '.'
 
 def die(s):
 	print(s, file=sys.stderr)
@@ -133,6 +135,8 @@ def cpio_mkdirs(dest):
 
 
 def cpio_add_file(src,dst):
+	if not src.startswith('/'):
+		src = cwd + "/" + src
 	if src in src_files:
 		return
 	if dst in dst_files:
@@ -177,12 +181,6 @@ def cpio_add_symlink(name, dest):
 
 	cpio_mkdirs(os.path.split(name)[0])
 	cpio_entry(name, dest.encode('utf-8'), mode = 0o777 | CPIO_MODE.S_ISLNK)
-
-if len(sys.argv) < 3:
-	die("Usage: initrd-build initrd.cpio files.txt [...]")
-
-
-initrd_filename = sys.argv[1]
 
 #deps = open(initrd_filename + ".deps", "w")
 #if not deps:
@@ -240,7 +238,38 @@ def process_line(line):
 		dest_lib = os.path.basename(lib)
 		cpio_add_file(lib, libdir + "/" + dest_lib)
 
-for filename in sys.argv[2:]:
+parser = argparse.ArgumentParser()
+parser.add_argument('files',
+	nargs='+',
+	help="Configuration files to parse")
+parser.add_argument('-o', '--output',
+	dest='cpio', type=str,
+	default='-',
+	help="Output of the cpio file")
+parser.add_argument( '-v', '--verbose',
+	dest='verbose', action='store_true',
+	help="Log every file included")
+parser.add_argument( '-c', '--xz',
+	dest='xz', action='store_true',
+	help="Compress the initrd with xz")
+parser.add_argument('-r', '--relative',
+	dest='relative', action='store_true',
+	help="Use the path of the config for relative path files")
+
+args = parser.parse_args()
+verbose = args.verbose
+initrd_filename = args.cpio
+
+if len(sys.argv) < 3:
+	die("Usage: initrd-build initrd.cpio files.txt [...]")
+
+
+for filename in args.files:
+	if args.relative:
+		cwd = os.path.split(filename)[0]
+	if cwd == '':
+		cwd = '.'
+
 	with open(filename, "r") as f:
 		linenum = 0
 		for line in f.readlines():
@@ -280,7 +309,7 @@ image += cpio_entry("TRAILER!!!", b'', mode=0)
 # this is ever concatenated with another initrd
 image = align(image, 512)
 
-if initrd_filename.endswith('.xz'):
+if args.xz or initrd_filename.endswith('.xz'):
 	# write to a temp file first
 	old_len = len(image)
 
@@ -297,7 +326,7 @@ if initrd_filename.endswith('.xz'):
 	# pad compressed data to a full block size to make linux
 	# happy if this is ever concatenated with another initrd
 	image = align(sub.stdout, 512)
-	print("%s: %d bytes (%d uncompressed)" % (tmp.name, len(image), old_len), file=sys.stderr)
+	print("%s: %d bytes (%d uncompressed)" % (initrd_filename, len(image), old_len), file=sys.stderr)
 else:
 	print("%s: %d bytes" % (initrd_filename, len(image)), file=sys.stderr)
 

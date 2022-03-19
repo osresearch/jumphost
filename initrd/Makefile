@@ -13,10 +13,10 @@ $O/init: init.c
 	$(CC) -O3 -W -Wall -o $@ $<
 
 $O/initrd.cpio: files.txt
-	./initrd-build $@ $<
+	./initrd-build -o $@ $<
 	sha256sum $@
 $O/initrd.cpio.xz: files.txt
-	./initrd-build $@ $<
+	./initrd-build --xz -o $@ $<
 	sha256sum $@
 
 $O/initrd.cpio.bz: $O/initrd.cpio
