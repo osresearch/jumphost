@@ -301,5 +301,8 @@ if initrd_filename.endswith('.xz'):
 else:
 	print("%s: %d bytes" % (initrd_filename, len(image)), file=sys.stderr)
 
-with open(initrd_filename, "wb") as initrd:
-	initrd.write(image)
+if initrd_filename == '-':
+	sys.stdout.buffer.write(image)
+else:
+	with open(initrd_filename, "wb") as initrd:
+		initrd.write(image)
