@@ -13,9 +13,6 @@ build/initrd-%.cpio: config/%.config
 		-o $@ \
 		$<
 
-etc:
-	mkdir -p $@
-
 keys: etc/user_ca
 keys: etc/host_ca
 keys: build/etc/ssh/ssh_host_rsa_key-cert.pub
@@ -79,6 +76,7 @@ $(INITRD): build/etc/ssh/ssh_host_rsa_key-cert.pub
 linux-builder/init:
 	$(MAKE) -C $(dir $@) $(notdir $@)
 
+# initrd is built into the kernel now
 NO=-initrd $(INITRD) \
 
 qemu: $(KERNEL) $(INITRD)
