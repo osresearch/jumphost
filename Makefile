@@ -6,7 +6,12 @@ all: keys $(KERNEL) $(INITRD)
 build/vmlinuz-%: config/%.config $(INITRD)
 	+./linux-builder/linux-builder \
 		--version 5.4.117 \
-		--config $<
+		--config $< \
+		--initrd "$(INITRD)" \
+		--uncompressed \
+		--hostname "jump" \
+		--cmdline "console=hvc0 ip=dhcp" \
+
 build/initrd-%.cpio: config/%.config
 	./linux-builder/initrd-builder \
 		-v \
@@ -84,7 +89,6 @@ qemu: $(KERNEL) $(INITRD)
 		-M q35 \
 		-m 512 \
 		-kernel $(KERNEL) \
-		-append "console=hvc0 ip=dhcp" \
 		-netdev user,id=eth0,hostfwd=tcp::5555-:22 \
 		-device virtio-net-pci,netdev=eth0 \
 		-device virtio-serial-pci,id=virtio-serial0              \
