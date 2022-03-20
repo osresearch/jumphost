@@ -1,15 +1,15 @@
 INITRD ?= build/initrd-jump.cpio
-KERNEL ?= build/vmlinuz-qemu
+KERNEL ?= build/vmlinuz-jump
 	
 all: keys $(KERNEL) $(INITRD)
 
-build/vmlinuz-%: config/%.config $(INITRD)
+build/vmlinuz-jump: $(INITRD)
 	+./linux-builder/linux-builder \
-		--version 5.4.117 \
-		--config $< \
+		--config linux-builder/config/linux-qemu.config \
+		--tag "jump" \
+		--hostname "jumphost" \
 		--initrd "$(INITRD)" \
 		--uncompressed \
-		--hostname "jump" \
 		--cmdline "console=hvc0 ip=dhcp" \
 
 build/initrd-%.cpio: config/%.config
