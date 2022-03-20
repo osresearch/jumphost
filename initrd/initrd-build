@@ -260,9 +260,6 @@ args = parser.parse_args()
 verbose = args.verbose
 initrd_filename = args.cpio
 
-if len(sys.argv) < 3:
-	die("Usage: initrd-build initrd.cpio files.txt [...]")
-
 
 for filename in args.files:
 	if args.relative:
