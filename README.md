@@ -12,6 +12,14 @@ Goals:
 * No shell for accidental code execution
 * Minimal attack surface
 
+Demo:
+
+```
+make keys
+make -j32 build/vmlinuz-jump
+make qemu
+```
+
 ## Signed user keys
 
 * https://smallstep.com/blog/use-ssh-certificates/
