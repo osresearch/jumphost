@@ -24,8 +24,6 @@ make -j32 build/vmlinuz-jump
 make qemu
 ```
 
-
-
 ## Signed user keys
 
 * https://smallstep.com/blog/use-ssh-certificates/
