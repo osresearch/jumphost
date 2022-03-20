@@ -2,7 +2,9 @@
 
 These scripts produce a minimal OpenSSH jump host, which will
 accept signed user keys and allow them to transfer to another
-host inside the network.
+host inside the network.  The build system uses
+[linux-builder](https://github.com/osresearch/linux-builder)
+to create a custom kernel and initrd with only the `sshd` program.
 
 Goals:
 
@@ -11,6 +13,18 @@ Goals:
 * Network logging
 * No shell for accidental code execution
 * Minimal attack surface
+
+## Building
+
+```
+git clone --recursive https://github.com/osresearch/jumphost
+cd jumphost
+make keys # create CA keys and a demo user
+make -j32 build/vmlinuz-jump
+make qemu
+```
+
+
 
 ## Signed user keys
 
