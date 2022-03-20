@@ -6,6 +6,7 @@ import os
 import sys
 import subprocess
 import hashlib
+import shlex
 from tempfile import NamedTemporaryFile
 
 verbose = 1
@@ -13,7 +14,10 @@ verbose = 1
 def system(*s):
 	if verbose > 2:
 		print(s)
-	subprocess.run(s, check=True)
+	# do not close file descriptors, which will allow
+	# communication from sub-make invocations to the make
+	# that invoked us
+	subprocess.run(s, check=True, close_fds=False)
 def die(*s):
 	print(*s, file=sys.stderr)
 	exit(1)
@@ -34,7 +38,14 @@ def readfile(filename):
 def writefile(filename, data):
 	with open(filename, "wb") as f:
 		f.write(data)
-	
+
+# allow $MAKE to be overridden in the environment, which
+# will inherit from Makefiles.  Note that it is split
+# into separate words so that the shell is not invoked
+# on sub-make builds
+make = os.getenv("MAKE")
+if not make:
+	make = "make"
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-O', '--output-dir',
@@ -50,10 +61,13 @@ parser.add_argument( '-v', '--verbose',
 	help="Verbose build")
 parser.add_argument( '-s', '--silent',
 	dest='verbose', action='store_const', const=0,
-	help="Verbose build")
+	help="Verbose build (add more for more verbosity)")
 parser.add_argument( '-m', '--menuconfig',
 	dest='menuconfig', action='store_true',
 	help="Run menuconfig on the config file")
+parser.add_argument( '-C', '--clean',
+	dest='clean', action='store_true',
+	help="Clean the build directory and source directory")
 parser.add_argument('-c', '--config',
 	dest='config', type=str,
 	default=None,
@@ -63,6 +77,10 @@ parser.add_argument('-p', '--patch',
 	dest='patch', type=str,
 	default=None,
 	help="Linux kernel patch file (optional)")
+parser.add_argument( '-M', '--make',
+	dest='make', type=str,
+	default=make,
+	help="Override the $(MAKE) environment variable")
 
 args = parser.parse_args()
 version = args.version
@@ -70,6 +88,9 @@ verbose = args.verbose
 config_file = args.config
 patch_file = args.patch
 output_dir = args.output
+
+# split it into words following shell semantics
+make = shlex.split(make)
 
 if not exists(config_file):
 	die(config_file + ": config file does not exist?")
@@ -101,6 +122,11 @@ if verbose > 1:
 	print("build   = " + build_dir)
 	print("kconfig = " + kconfig)
 	print("tag     = " + tag + patch_tag)
+
+if args.clean:
+	print("Removing " + linux_dir + " and " + build_dir, file=sys.stderr)
+	system("rm", "-rf", linux_dir, build_dir)
+	exit(0)
 
 unpack_canary = os.path.join(linux_dir, ".unpacked")
 patch_canary = os.path.join(linux_dir, ".patched")
@@ -144,14 +170,14 @@ or os.stat(kconfig).st_mtime < os.stat(config_file).st_mtime:
 	info(kconfig + ": rebuilding kernel config")
 	os.makedirs(build_dir, exist_ok=True)
 	system("cp", config_file, kconfig)
-	system("make",
+	system(*make,
 		"-C", linux_dir,
 		"O=" + build_rdir,
 		"olddefconfig"
 	)
 
 if args.menuconfig:
-	system("make",
+	system(*make,
 		"-j1",
 		"-C", linux_dir,
 		"O=" + build_rdir,
@@ -166,11 +192,10 @@ if args.menuconfig:
 	
 # finally ready to build!
 verbose_str = "V=0"
-if verbose > 2:
+if verbose > 3:
 	verbose_str = "V=1"
 
-system("make",
-	"-j32",
+system(*make,
 	"KBUILD_HOST=builder",
 	"KBUILD_BUILD_USER=builder",
 	"KBUILD_BUILD_TIMESTAMP=" + config_hash,
