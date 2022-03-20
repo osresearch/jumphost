@@ -1,13 +1,17 @@
-INITRD ?= build/initrd.cpio.xz
-KERNEL ?= build/vmlinuz-jump
+INITRD ?= build/initrd-jump.cpio
+KERNEL ?= build/vmlinuz-qemu
 	
 all: keys $(KERNEL) $(INITRD)
 
-build/vmlinuz-%: config/%.config
-	+./initrd/linux-build \
-		-v -v \
+build/vmlinuz-%: config/%.config $(INITRD)
+	+./linux-builder/linux-builder \
 		--version 5.4.117 \
 		--config $<
+build/initrd-%.cpio: config/%.config
+	./linux-builder/initrd-builder \
+		-v \
+		-o $@ \
+		$<
 
 etc:
 	mkdir -p $@
@@ -65,24 +69,16 @@ etc/testuser_rsa-cert.pub: etc/testuser_rsa | etc
 		$<.pub
 
 
-qemu: all
+NO=-initrd $(INITRD) \
+
+qemu: $(KERNEL) $(INITRD)
 	qemu-system-x86_64 \
 		-M q35 \
 		-m 512 \
 		-kernel $(KERNEL) \
-		-initrd $(INITRD) \
 		-append "console=hvc0 ip=dhcp" \
 		-netdev user,id=eth0,hostfwd=tcp::5555-:22 \
 		-device virtio-net-pci,netdev=eth0 \
 		-device virtio-serial-pci,id=virtio-serial0              \
 		-chardev stdio,id=charconsole0                           \
 		-device virtconsole,chardev=charconsole0,id=console0  \
-
-build/vmlinuz:
-	$(MAKE) -C kernel
-build/initrd.cpio.xz: initrd/files.txt
-	$(MAKE) -C initrd ../$@
-build/initrd.cpio: initrd/files.txt
-	$(MAKE) -C initrd ../$@
-
-
