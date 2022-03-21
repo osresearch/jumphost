@@ -16,6 +16,7 @@ build/initrd-%.cpio: config/%.config
 	./linux-builder/initrd-builder \
 		-v \
 		-o $@ \
+		./linux-builder/config/initrd-base.config \
 		$<
 
 keys: etc/user_ca
