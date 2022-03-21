@@ -6,7 +6,7 @@ all: keys $(KERNEL) $(INITRD)
 build/vmlinuz-jump: $(INITRD)
 	+./linux-builder/linux-builder \
 		--version 5.4.117 \
-		--config linux-builder/config/linux-qemu.config \
+		--config linux-builder/config/linux-virtio.config \
 		--tag "jump" \
 		--hostname "jumphost" \
 		--initrd "$(INITRD)" \
