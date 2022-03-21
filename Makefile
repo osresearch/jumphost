@@ -5,12 +5,23 @@ all: keys $(KERNEL) $(INITRD)
 
 build/vmlinuz-jump: $(INITRD)
 	+./linux-builder/linux-builder \
+		--version 5.4.117 \
 		--config linux-builder/config/linux-qemu.config \
 		--tag "jump" \
 		--hostname "jumphost" \
 		--initrd "$(INITRD)" \
 		--uncompressed \
-		--cmdline "console=hvc0 ip=dhcp" \
+		--cmdline "earlyprintk=serial,ttyS0 console=ttyS0 ip=::::jump"
+
+# see linux/Documentation/filesystems/nfs/nfsroot.txt
+# if client-ip is INADDR_ANY (or empty), autoconfig will run
+#ip=<client-ip>:<server-ip>:<gw-ip>:<netmask>:<hostname>:<device>:<autoconf>:
+
+menuconfig:
+	./linux-builder/linux-builder \
+		--config linux-builder/config/linux-qemu.config \
+		--tag "jump" \
+		--menuconfig
 
 build/initrd-%.cpio: config/%.config
 	./linux-builder/initrd-builder \
@@ -87,11 +98,15 @@ NO=-initrd $(INITRD) \
 
 qemu: $(KERNEL) $(INITRD)
 	qemu-system-x86_64 \
-		-M q35 \
+		-M q35,accel=kvm \
 		-m 512 \
 		-kernel $(KERNEL) \
 		-netdev user,id=eth0,hostfwd=tcp::5555-:22 \
 		-device virtio-net-pci,netdev=eth0 \
-		-device virtio-serial-pci,id=virtio-serial0              \
-		-chardev stdio,id=charconsole0                           \
-		-device virtconsole,chardev=charconsole0,id=console0  \
+		-serial stdio \
+
+#		-device virtio-serial-pci,id=virtio-serial0              \
+#		-chardev stdio,id=charconsole0                           \
+#		-device serial,chardev=charconsole0,id=console0  \
+
+# -device virtconsole,chardev=charconsole0,id=console0  \
