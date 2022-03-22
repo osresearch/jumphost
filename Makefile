@@ -40,11 +40,14 @@ build/initrd-%.cpio: %/initrd.config $(INITRD_CONFIG) $(INITRD_EXTRA)
 		-v \
 		--relative \
 		-o $@ \
+		--deps $(dir $@)/.$(notdir $@).d \
 		$(INITRD_CONFIG) \
 		$<
 	if [ -n "$(INITRD_EXTRA)" ]; then \
 		cat "$(INITRD_EXTRA)" >> $@ ; \
 	fi
+
+-include build/.*.d
 
 keys: build/etc/user_ca
 keys: build/etc/host_ca
