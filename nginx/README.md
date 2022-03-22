@@ -16,7 +16,7 @@ the machine that controls the keys and can build a new appliance image.
 ```
 
 
-To rewnew, run 
+To setup the SSL certs for individual domains, run:
 ```
 certbot \
   --config-dir local/etc/letsencrypt \
@@ -26,7 +26,30 @@ certbot \
   --standalone \
   --http-01-port 9090 \
   --https-port 9443 \
-  -d example.com
+  -d host.example.com
+```
+
+For a wild card domain (which will require setting dns records):
+```
+certbot \
+  --config-dir local/etc/letsencrypt \
+  --logs-dir /tmp/certbot/logs \
+  --work-dir /tmp/certbot \
+  certonly \
+  --manual \
+  --preferred-challenges dns-01 \
+  --manual-public-ip-logging-ok \
+  -d '*.exmaple.com' \
+  -d 'example.com'
+```
+
+To renew:
+```
+certbot \
+  --config-dir local/etc/letsencrypt \
+  --logs-dir /tmp/certbot/logs \
+  --work-dir /tmp/certbot \
+  renew
 ```
 
 and then rebuild the nginx image.
