@@ -8,11 +8,11 @@ to create a custom kernel and initrd with only the `sshd` program.
 
 Goals:
 
-* Diskless image
-* Immutable system
-* Network logging
-* No shell for accidental code execution
-* Minimal attack surface
+* [X] Diskless image
+* [X] Immutable system
+* [X] Network logging
+* [X] No shell for accidental code execution
+* [X] Minimal attack surface
 
 ## Building
 
@@ -22,6 +22,12 @@ cd jumphost
 make keys # create CA keys and a demo user
 make -j32 build/vmlinuz-jump
 make qemu
+```
+
+## Running with libvirt
+
+```
+virsh create jump/jump.xml
 ```
 
 ## Signed user keys
