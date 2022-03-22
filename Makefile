@@ -1,22 +1,23 @@
 TARGET ?= jump
 INITRD ?= build/initrd-$(TARGET).cpio
 BUNDLE ?=
-CMDLINE ?= quiet console=ttyS0 ip=::::$(TARGET)
-KERNEL ?= build/vmlinuz-$(if $(BUNDLE),$(TARGET),virtio)
+KERNEL_TAG = $(if $(BUNDLE),$(TARGET),virtio)
+KERNEL = build/vmlinuz-$(KERNEL_TAG)
+INITRD_EXTRA ?=
+HOSTNAME ?= $(TARGET)
+CMDLINE ?= quiet console=ttyS0 ip=::::$(HOSTNAME)
 
 all: keys $(KERNEL) $(INITRD)
 
-build/vmlinuz-virtio: $(if $(BUNDLE),$(INITRD))
+build/vmlinuz-$(KERNEL_TAG): $(if $(BUNDLE),$(INITRD))
 	+./linux-builder/linux-builder \
 		--version 5.4.117 \
 		--config linux-builder/config/linux-virtio.config \
+		--tag "$(KERNEL_TAG)" \
 		$(if $(BUNDLE), \
 			--initrd "$(INITRD)" \
-			--hostname "$(TARGET)" \
+			--hostname "$(HOSTNAME)" \
 			--cmdline "$(CMDLINE)" \
-			--tag "$(TARGET)" \
-		,
-			--tag "virtio" \
 		)
 
 # see linux/Documentation/filesystems/nfs/nfsroot.txt
@@ -34,13 +35,16 @@ INITRD_CONFIG = \
 	base/initrd.config \
 	syslogd/initrd.config \
 
-build/initrd-%.cpio: %/initrd.config $(INITRD_CONFIG)
+build/initrd-%.cpio: %/initrd.config $(INITRD_CONFIG) $(INITRD_EXTRA)
 	./linux-builder/initrd-builder \
 		-v \
 		--relative \
 		-o $@ \
 		$(INITRD_CONFIG) \
 		$<
+	if [ -n "$(INITRD_EXTRA)" ]; then \
+		cat "$(INITRD_EXTRA)" >> $@ ; \
+	fi
 
 keys: build/etc/user_ca
 keys: build/etc/host_ca
