@@ -39,7 +39,7 @@ certbot \
   --manual \
   --preferred-challenges dns-01 \
   --manual-public-ip-logging-ok \
-  -d '*.exmaple.com' \
+  -d '*.example.com' \
   -d 'example.com'
 ```
 
